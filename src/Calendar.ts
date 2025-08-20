@@ -1,5 +1,6 @@
 import Holidays from "date-holidays"
 import dayjs from "dayjs"
+import type { HolidaysTypes } from "date-holidays"
 
 import { CALENDAR_WIDTH, ONE_DAY_MS } from "./constants"
 import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, LegendItem, LegendType } from "./types"
@@ -539,13 +540,13 @@ export class Calendar {
     }
     if (!this.holiday) return undefined
 
-    const holidayInfo = this.holiday.isHoliday(date)
+    const holidayInfo: HolidaysTypes.Holiday[] | HolidaysTypes.Holiday | false = this.holiday.isHoliday(date)
     if (!holidayInfo) {
       this.holidaysCache[isoDate] = true
       return undefined
     }
     // holidayInfo can be object or array
-    const name = Array.isArray(holidayInfo) ? holidayInfo[0]?.name : holidayInfo.name
+    const name = Array.isArray(holidayInfo) ? holidayInfo[0]?.name : (holidayInfo as HolidaysTypes.Holiday).name
     this.holidaysCache[isoDate] = name || true
     return name || undefined
   }
