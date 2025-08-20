@@ -1,0 +1,395 @@
+:root {
+  /* base */
+  --t-cal-bg: #ffffff;
+  --t-cal-text: #3a3834;
+
+  /* brand */
+  --t-cal-primary: #c4af87;
+  --t-cal-secondary: #f5f3ed;
+  --t-cal-ternary: #efefed; 
+  --t-cal-disabled: #c5c3bf;
+  
+  /* holidays / legends */
+  --t-cal-holiday-bg: #fff1f2;
+  --t-cal-holiday-outline: #fecdd3;
+  --t-cal-planned: #facc15;
+  --t-cal-availability: #22c55e;
+  
+  /* misc */
+  --t-cal-divider-bg: #d7d4cc;
+  --t-cal-w: 420px;
+  --t-cal-cell-h: 52px;
+  --t-cal-months: 1;
+  --t-cal-font: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+.t-cal-root {
+  box-sizing: border-box;
+  background: var(--t-cal-bg);
+  color: var(--t-cal-text);
+  font-family: var(--t-cal-font);
+  border-radius: 4px;
+  box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.16);
+  padding: 16px;
+  max-width: var(--t-cal-w);
+  width: 100%;
+  z-index: 1001;
+}
+
+.t-cal-header {
+  margin-bottom: 16px;
+}
+
+.t-cal-header-info {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background-color: var(--t-cal-ternary);
+  padding: 8px;
+  color: var(--t-cal-text);
+  font-size: 14px;
+  line-height: 24px;
+  margin-bottom: 24px;
+}
+
+.t-cal-header-info span {
+  min-width: 60px;
+}
+
+.t-cal-header-info-date-divider {
+  background-color: var(--t-cal-divider-bg);
+  width: 16px;
+  height: 2px;
+}
+
+.t-cal-header-info-night-divider {
+  background-color: var(--t-cal-divider-bg);
+  width: 1px;
+  height: 20px;
+  margin: 0 8px;
+}
+
+.t-cal-header-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.t-cal-title-wrapper {
+  display: grid;
+  grid-template-columns: repeat(var(--t-cal-months), 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.t-cal-title {
+  display: flex;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.t-cal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: var(--t-cal-bg);
+  width: 32px;
+  height: 20px;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.t-cal-prev {
+  left: 0;
+}
+
+.t-cal-prev::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-bottom: 1.5px solid var(--t-cal-text);
+  border-left: 1.5px solid var(--t-cal-text);
+  transform: rotate(45deg);
+}
+
+.t-cal-next {
+  right: 0;
+}
+
+.t-cal-next::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-top: 1.5px solid var(--t-cal-text);
+  border-right: 1.5px solid var(--t-cal-text);
+  transform: rotate(45deg);
+}
+
+.t-cal-months {
+  display: grid;
+  grid-template-columns: repeat(var(--t-cal-months), 1fr);
+  gap: 16px;
+}
+
+.t-cal-month {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* .t-cal-title-inline {
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 4px;
+} */
+
+.t-cal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.t-cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.t-cal-head-cell {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t-cal-text);
+  text-align: center;
+  padding: 8px 0;
+}
+
+.t-cal-cell {
+  min-height: var(--t-cal-cell-h);
+}
+
+.t-cal-empty { 
+	visibility: hidden; 
+}
+
+.t-cal-day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: var(--t-cal-cell-h);
+  border: none;
+  background: var(--t-cal-bg);
+  font-size: 16px;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow .15s ease, background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.t-cal-day:hover:not(.is-disabled) {
+  background-color: var(--t-cal-ternary);
+}
+
+.t-cal-day.is-start,
+.t-cal-day.is-end {
+  background: var(--t-cal-primary) !important;
+}
+
+.t-cal-day.is-in-range {
+  background: var(--t-cal-secondary) !important;
+}
+
+.t-cal-day.is-disabled {
+  color: var(--t-cal-disabled);
+  cursor: not-allowed;
+}
+
+.t-cal-day.is-holiday {
+  background: var(--t-cal-holiday-bg);
+  border-color: var(--t-cal-holiday-outline);
+}
+
+.t-cal-day.is-hover-range:not(.is-in-range) {
+  background: var(--t-cal-secondary);
+}
+
+.t-cal-availability {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.t-cal-availability-dot.price {
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.t-cal-availability-dot.symbol {
+  position: relative;
+  width: 12px;
+  height: 12px;
+}
+
+.t-cal-availability-dot.circle {
+  border-radius: 50%;
+  border: 1px solid var(--t-cal-text);
+  background-color: var(--t-cal-bg);
+  width: 10px;
+  height: 10px;
+}
+
+.t-cal-availability-dot.triangle {
+  color: var(--t-cal-text);
+  width: 0px;
+  height: 0px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 12px solid var(--t-cal-text);
+}
+
+.t-cal-availability-dot.cross::before {
+  content: "";
+  position: absolute;
+  left: -1.5px;
+  top: 50%;
+  width: 15px;
+  height: 2px;
+  background-color: var(--t-cal-text);
+  transform: rotate(45deg);
+}
+
+.t-cal-availability-dot.cross::after {
+  content: "";
+  position: absolute;
+  left: -1.5px;
+  top: 50%;
+  width: 15px;
+  height: 2px;
+  background-color: var(--t-cal-text);
+  transform: rotate(-45deg);
+}
+
+/* .t-cal-legend-bar {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 4px;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.t-cal-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.t-cal-legend-dot.plannedStay { 
+	background: var(--t-cal-planned); 
+}
+
+.t-cal-legend-dot.availability { 
+	background: var(--t-cal-availability); 
+} */
+
+.t-cal-footer {
+  margin-top: 12px;
+  display: grid;
+  gap: 16px;
+  justify-content: center;
+}
+
+.t-cal-legend {
+  display: flex;
+  justify-content: center;
+  gap: 8px
+}
+
+.t-cal-legend-primary {
+  font-size: 13px;
+  line-height: 18px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.t-cal-legend-primary span {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+}
+
+.t-cal-legend-secondary {
+  position: relative;
+  font-size: 12px;
+  line-height: 18px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.t-cal-legend-secondary.circle::before {
+  content: "";
+  display: inline-block;
+  border-radius: 50%;
+  border: 1px solid var(--t-cal-text);
+  background-color: var(--t-cal-bg);
+  width: 10px;
+  height: 10px;
+}
+
+.t-cal-legend-secondary.triangle::before {
+  content: "";
+  display: inline-block;
+  color: var(--t-cal-text);
+  width: 0px;
+  height: 0px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 12px solid var(--t-cal-text);
+}
+
+.t-cal-legend-secondary.cross span {
+  padding-left: 18px;
+}
+
+.t-cal-legend-secondary.cross::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 15px;
+  height: 2px;
+  background-color: var(--t-cal-text);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.t-cal-legend-secondary.cross::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 15px;
+  height: 2px;
+  background-color: var(--t-cal-text);
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+.hide {
+  display: none;
+}
+
+.show {
+  display: block;
+}
+
+@media (max-width: 420px) {
+  :root { 
+    --t-cal-cell-h: 40px; 
+  }
+}

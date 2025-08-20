@@ -1,0 +1,41 @@
+{
+  "name": "tripla_calendar",
+  "version": "0.1.0",
+  "description": "Standalone calendar made by Tripla Front End team",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "unpkg": "./dist/index.umd.js",
+  "jsdelivr": "./dist/index.umd.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": ["dist", "READ.md", "LICENSE"],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "clean": "rimraf dist",
+    "prepublishOnly": "pnpm clean && pnpm build"
+  },
+  "publishConfig": { 
+    "access": "public"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.2",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "dependencies": {
+    "date-holidays": "^3.25.1",
+    "dayjs": "^1.11.13"
+  }
+}
