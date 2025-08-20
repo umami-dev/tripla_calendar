@@ -1,6 +1,6 @@
 {
   "name": "tripla_calendar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Standalone calendar made by Tripla Front End team",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -16,7 +16,11 @@
     },
     "./style.css": "./dist/style.css"
   },
-  "files": ["dist", "READ.md", "LICENSE"],
+  "files": [
+    "dist",
+    "READ.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "scripts": {
     "dev": "vite",
@@ -25,7 +29,7 @@
     "clean": "rimraf dist",
     "prepublishOnly": "pnpm clean && pnpm build"
   },
-  "publishConfig": { 
+  "publishConfig": {
     "access": "public"
   },
   "devDependencies": {
