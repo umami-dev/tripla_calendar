@@ -38,8 +38,13 @@
     "vite": "^7.1.2",
     "vite-plugin-dts": "^4.5.4"
   },
-  "dependencies": {
+  "peerDependencies": {
     "date-holidays": "^3.25.1",
     "dayjs": "^1.11.13"
+  },
+  "peerDependenciesMeta": {
+    "date-holidays": {
+      "optional": true
+    }
   }
 }

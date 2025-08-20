@@ -14,7 +14,13 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: [],
+      external: ["dayjs", "date-holidays"],
+      output: {
+        globals: {
+          dayjs: "dayjs",
+          "date-holidays": "DateHolidays",
+        },
+      },
     },
   },
   plugins: [
