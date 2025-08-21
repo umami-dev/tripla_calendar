@@ -8,6 +8,7 @@
   "unpkg": "./dist/index.umd.js",
   "jsdelivr": "./dist/index.umd.js",
   "types": "./dist/index.d.ts",
+  "./style.css": "./dist/style.css",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

@@ -16,6 +16,10 @@ export default defineConfig({
     rollupOptions: {
       external: ["dayjs", "date-holidays"],
       output: {
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.names.includes('index.css')) return 'style.css'
+          return 'assets/[name]-[hash][extname]'
+        },
         globals: {
           dayjs: "dayjs",
           "date-holidays": "DateHolidays",
