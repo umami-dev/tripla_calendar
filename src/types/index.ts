@@ -16,6 +16,11 @@ export interface LegendItem {
 	type?: LegendType
 }
 
+export interface DateItem {
+	startDate: Date
+	endDate?: Date
+}
+
 export interface CalendarOptions {
 	// main
 	target: HTMLElement | string
@@ -23,7 +28,7 @@ export interface CalendarOptions {
 	startWeekOn?: number
 	selectionMode?: SelectionModeType
 	initialDate?: Date
-	onSelect?: (date: Date) => void
+	onSelect?: ({ startDate, endDate }: DateItem) => void
 
 	// disable rules
 	minDate?: Date

@@ -4,7 +4,7 @@ import type * as Holidays from "date-holidays"
 
 import { CALENDAR_WIDTH, ONE_DAY_MS } from "./constants"
 import { loadHolidays } from "./plugins/date-holidays"
-import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, LegendItem, LegendType, SupportedHolidayCountryType, SupportedLocaleType } from "./types"
+import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, LegendItem, LegendType, SupportedHolidayCountryType, SupportedLocaleType, DateItem } from "./types"
 
 export default class Calendar {
 	// main
@@ -12,7 +12,7 @@ export default class Calendar {
   private dateLocale: LocaleType
   private startWeekOn: number
   private selectionMode: SelectionModeType
-  private onSelect?: (date: Date) => void
+  private onSelect?: ({ startDate, endDate }: DateItem) => void
 
 	// disable rules
   private minDate?: Date
@@ -427,23 +427,25 @@ export default class Calendar {
     return footer
   }
 
+  // TODO handle multiple mode
   private handleClick(date: Date) {
-    this.handleClickDate(date)
-
     if (this.selectionMode === "single") {
       this.selectedStartDate = date
       this.selectedEndDate = undefined
       this.dispatch("calendar:date-select", { date })
+      this.handleClickDate({ startDate: date })
       this.render()
       return
     }
 
     // range mode
     if (!this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
+      // fresh start
       this.selectedStartDate = date
       this.selectedEndDate = undefined
       this.hoverDate = undefined
       this.dispatch("calendar:range-start", { start: date })
+      this.handleClickDate({ startDate: date })
       this.render()
       return
     }
@@ -465,12 +467,17 @@ export default class Calendar {
       nights,
     })
 
+    this.handleClickDate({
+      startDate: this.selectedStartDate,
+      endDate: this.selectedEndDate,
+    })
+
     this.render()
   }
 
-  private handleClickDate(date: Date) {
+  private handleClickDate({ startDate, endDate }: DateItem ) {
     if (this.onSelect) {
-      this.onSelect(date)
+      this.onSelect({ startDate, endDate })
     }
   }
 
