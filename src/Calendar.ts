@@ -4,7 +4,7 @@ import type * as Holidays from "date-holidays"
 
 import { CALENDAR_WIDTH, ONE_DAY_MS } from "./constants"
 import { loadHolidays } from "./plugins/date-holidays"
-import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, LegendItem, LegendType, SupportedHolidayCountryType, SupportedLocaleType, DateItem } from "./types"
+import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, LegendItem, LegendType, SupportedHolidayCountryType, SupportedLocaleType, DateItem, ActiveInputType, ShownMonthsType } from "./types"
 
 export default class Calendar {
 	// main
@@ -12,7 +12,8 @@ export default class Calendar {
   private dateLocale: LocaleType
   private startWeekOn: number
   private selectionMode: SelectionModeType
-  private onSelect?: ({ startDate, endDate }: DateItem) => void
+  private activeInput: ActiveInputType
+  private onSelect?: ({ start, end }: DateItem) => void
 
 	// disable rules
   private minDate?: Date
@@ -61,6 +62,7 @@ export default class Calendar {
     this.dateLocale = opts.dateLocale ?? "en-US"
     this.startWeekOn = Math.min(Math.max(opts.startWeekOn ?? 0, 0), 6)
     this.selectionMode = opts.selectionMode ?? "range"
+    this.activeInput = null
     this.onSelect = opts.onSelect
 
 		// disable rules
@@ -127,6 +129,15 @@ export default class Calendar {
 			this.viewMonth -= 1
 		}
     this.render(true)
+  }
+
+  public setActiveInput(value: ActiveInputType) {
+    this.activeInput = value
+  }
+
+  public setShownMonths(value: ShownMonthsType) {
+    this.shownMonths = value
+    this.render()
   }
 
   public setPrimaryLegends(legends: LegendItem[]) {
@@ -429,56 +440,63 @@ export default class Calendar {
 
   // TODO handle multiple mode
   private handleClick(date: Date) {
+    const safeDate = this.normalizeDate(date)
+
     if (this.selectionMode === "single") {
-      this.selectedStartDate = date
+      this.selectedStartDate = safeDate
       this.selectedEndDate = undefined
-      this.dispatch("calendar:date-select", { date })
-      this.handleClickDate({ startDate: date })
+      this.dispatch("calendar:date-select", { date: safeDate })
+      this.handleClickDate({ start: safeDate })
       this.render()
       return
     }
 
     // range mode
-    if (!this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
-      // fresh start
-      this.selectedStartDate = date
+    if (this.activeInput === "start" || !this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
+      this.selectedStartDate = safeDate
       this.selectedEndDate = undefined
       this.hoverDate = undefined
-      this.dispatch("calendar:range-start", { start: date })
-      this.handleClickDate({ startDate: date })
+      this.dispatch("calendar:range-start", { start: safeDate })
+      this.handleClickDate({ start: safeDate })
       this.render()
       return
     }
 
     // set end
-    this.selectedEndDate = date
-    if (this.selectedEndDate < this.selectedStartDate) {
-      [this.selectedStartDate, this.selectedEndDate] = [this.selectedEndDate, this.selectedStartDate]
+    if (this.activeInput === "end") {
+      this.selectedEndDate = safeDate
+      if (this.selectedEndDate < this.selectedStartDate) {
+        [this.selectedStartDate, this.selectedEndDate] = [this.selectedEndDate, this.selectedStartDate]
+      }
+
+      const nights = Math.max(
+        0,
+        Math.round((+this.selectedEndDate - +this.selectedStartDate) / ONE_DAY_MS)
+      )
+
+      this.dispatch("calendar:range-complete", {
+        start: this.selectedStartDate,
+        end: this.selectedEndDate,
+        nights,
+      })
+
+      this.handleClickDate({
+        start: this.selectedStartDate,
+        end: this.selectedEndDate,
+      })
     }
-
-    const nights = Math.max(
-      0,
-      Math.round((+this.selectedEndDate - +this.selectedStartDate) / ONE_DAY_MS)
-    )
-
-    this.dispatch("calendar:range-complete", {
-      start: this.selectedStartDate,
-      end: this.selectedEndDate,
-      nights,
-    })
-
-    this.handleClickDate({
-      startDate: this.selectedStartDate,
-      endDate: this.selectedEndDate,
-    })
 
     this.render()
   }
 
-  private handleClickDate({ startDate, endDate }: DateItem ) {
+  private handleClickDate({ start, end }: DateItem ) {
     if (this.onSelect) {
-      this.onSelect({ startDate, endDate })
+      this.onSelect({ start, end })
     }
+  }
+
+  private normalizeDate(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0)
   }
 
   private async ensureHolidays() {

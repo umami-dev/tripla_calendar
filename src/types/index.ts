@@ -4,6 +4,8 @@ export type SelectionModeType = "single" | "range" | "multiple"
 export type AvailabilityType = 'price' | 'status'
 export type SupportedLocaleType = "ja" | "en" | "ko" | "zh_Hans" | "zh_Hant" | "id" | "th" | "ar"
 export type SupportedHolidayCountryType = "JP"
+export type ActiveInputType = "start" | "end" | null
+export type ShownMonthsType = 1 | 2
 
 export interface AvailabilityItem {
 	type: AvailabilityType
@@ -17,8 +19,8 @@ export interface LegendItem {
 }
 
 export interface DateItem {
-	startDate: Date
-	endDate?: Date
+	start: Date
+	end?: Date
 }
 
 export interface CalendarOptions {
@@ -28,7 +30,7 @@ export interface CalendarOptions {
 	startWeekOn?: number
 	selectionMode?: SelectionModeType
 	initialDate?: Date
-	onSelect?: ({ startDate, endDate }: DateItem) => void
+	onSelect?: ({ start, end }: DateItem) => void
 
 	// disable rules
 	minDate?: Date
@@ -39,7 +41,7 @@ export interface CalendarOptions {
 	hasInfo?: boolean
 
 	// shown months
-	shownMonths?: 1 | 2
+	shownMonths?: ShownMonthsType
 
 	// availability
 	availability?: AvailabilityItem
