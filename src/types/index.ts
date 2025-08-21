@@ -22,6 +22,8 @@ export interface CalendarOptions {
 	dateLocale?: LocaleType
 	startWeekOn?: number
 	selectionMode?: SelectionModeType
+	initialDate?: Date
+	onSelect?: (date: Date) => void
 
 	// disable rules
 	minDate?: Date
@@ -45,9 +47,6 @@ export interface CalendarOptions {
 	// legends
 	primaryLegends?: LegendItem[]
 	secondaryLegends?: LegendItem[]
-
-	// initial month to show
-	initialDate?: Date
 
 	// accessibility
 	ariaLabelMonth?: (date: Date) => string

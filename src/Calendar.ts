@@ -12,11 +12,12 @@ export default class Calendar {
   private dateLocale: LocaleType
   private startWeekOn: number
   private selectionMode: SelectionModeType
+  private onSelect?: (date: Date) => void
 
 	// disable rules
   private minDate?: Date
   private maxDate?: Date
-  private isDateDisabled?: (d: Date) => boolean
+  private isDateDisabled?: (date: Date) => boolean
 
   // info
   private hasInfo: boolean
@@ -60,6 +61,7 @@ export default class Calendar {
     this.dateLocale = opts.dateLocale ?? "en-US"
     this.startWeekOn = Math.min(Math.max(opts.startWeekOn ?? 0, 0), 6)
     this.selectionMode = opts.selectionMode ?? "range"
+    this.onSelect = opts.onSelect
 
 		// disable rules
     this.minDate = opts.minDate || new Date
@@ -370,7 +372,7 @@ export default class Calendar {
 
       // click selection + hover
       if (!isDisabled) {
-        dayButton.addEventListener("click", () => this.handleSelect(date))
+        dayButton.addEventListener("click", () => this.handleClick(date))
         dayButton.addEventListener("mouseenter", () => {
           this.hoverDate = date
           this.updateHoverClasses(monthsContainer)
@@ -425,7 +427,9 @@ export default class Calendar {
     return footer
   }
 
-  private handleSelect(date: Date) {
+  private handleClick(date: Date) {
+    this.handleClickDate(date)
+
     if (this.selectionMode === "single") {
       this.selectedStartDate = date
       this.selectedEndDate = undefined
@@ -464,6 +468,12 @@ export default class Calendar {
     this.render()
   }
 
+  private handleClickDate(date: Date) {
+    if (this.onSelect) {
+      this.onSelect(date)
+    }
+  }
+
   private async ensureHolidays() {
     if (!this.enableHolidays) return null
     if (!this.holidays) {
@@ -494,24 +504,25 @@ export default class Calendar {
   }
 
   private updateHoverClasses(grid: HTMLElement) {
-    const allDay = grid.querySelectorAll<HTMLButtonElement>(".t-cal-day")
-    allDay.forEach((el) => el.classList.remove("is-hover-range"))
-
-    if (!this.selectedStartDate || this.selectedEndDate || !this.hoverDate) return
-
-    const startISODate = this.toISO(this.selectedStartDate)
-    const hoverISODate = this.toISO(this.hoverDate)
-
-    const [fromDate, toDate] = startISODate <= hoverISODate ? [startISODate, hoverISODate] : [hoverISODate, startISODate]
-
-    allDay.forEach((el) => {
-      const isoDate = el.dataset.date!
-      if (isoDate > fromDate && isoDate < toDate) el.classList.add("is-hover-range")
-    })
+    if (this.selectionMode !== 'single') {
+      const allDay = grid.querySelectorAll<HTMLButtonElement>(".t-cal-day")
+      allDay.forEach((el) => el.classList.remove("is-hover-range"))
+  
+      if (!this.selectedStartDate || this.selectedEndDate || !this.hoverDate) return
+  
+      const startISODate = this.toISO(this.selectedStartDate)
+      const hoverISODate = this.toISO(this.hoverDate)
+  
+      const [fromDate, toDate] = startISODate <= hoverISODate ? [startISODate, hoverISODate] : [hoverISODate, startISODate]
+  
+      allDay.forEach((el) => {
+        const isoDate = el.dataset.date!
+        if (isoDate > fromDate && isoDate < toDate) el.classList.add("is-hover-range")
+      })
+    }
   }
   
   private getAvailabilityStatus(value: number): LegendType | '' {
-    console.log(value, value >= 5)
     if (value === 0) return 'cross'
     if (value < 5) return 'triangle'
     if (value >= 5) return 'circle'
