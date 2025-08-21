@@ -2,8 +2,8 @@ export type LegendType = 'circle' | 'triangle' | 'cross'
 export type LocaleType = "ja-JP" | "en-US" | "ko-KR" | "zh-CN" | "zh-TW" | "id-ID" | "th-TH" | "ar-SA"
 export type SelectionModeType = "single" | "range" | "multiple"
 export type AvailabilityType = 'price' | 'status'
-export type SupportedLocaleType = "jp" | "en" | "ko" | "zh_Hans" | "zh_Hant" | "id" | "th" | "ar"
-export type SupportedHolidayCountryType = "jp"
+export type SupportedLocaleType = "ja" | "en" | "ko" | "zh_Hans" | "zh_Hant" | "id" | "th" | "ar"
+export type SupportedHolidayCountryType = "JP"
 
 export interface AvailabilityItem {
 	type: AvailabilityType

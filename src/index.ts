@@ -1,2 +1,4 @@
-export { Calendar } from './Calendar'
+import "./style.css" 
+
+export { default as Calendar } from './Calendar'
 export * from './types'

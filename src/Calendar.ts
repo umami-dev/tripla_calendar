@@ -1,11 +1,12 @@
-import Holidays from "date-holidays"
+
 import dayjs from "dayjs"
-import type { HolidaysTypes } from "date-holidays"
+import type * as Holidays from "date-holidays"
 
 import { CALENDAR_WIDTH, ONE_DAY_MS } from "./constants"
-import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, LegendItem, LegendType } from "./types"
+import { loadHolidays } from "./plugins/date-holidays"
+import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, LegendItem, LegendType, SupportedHolidayCountryType, SupportedLocaleType } from "./types"
 
-export class Calendar {
+export default class Calendar {
 	// main
   private root: HTMLElement
   private dateLocale: LocaleType
@@ -27,7 +28,10 @@ export class Calendar {
   private availability?: AvailabilityItem
 
 	// holidays
-  private holiday?: Holidays
+  private enableHolidays: boolean
+  private holidays?: Holidays.default
+  private holidayCountry?: SupportedHolidayCountryType
+  private holidayLanguage?: SupportedLocaleType
   private holidaysCache: Record<string, string | true> = {}
 
 	// legends
@@ -76,11 +80,9 @@ export class Calendar {
     this.availability = opts.availability
 
 		// holidays
-    if (opts.enableHolidays) {
-      const country = opts.holidayCountry ?? "JP"
-      const languages = opts.holidayLanguage ?? (this.dateLocale.startsWith("ja") ? "ja" : "en")
-      this.holiday = new Holidays(country, { languages })
-    }
+    this.enableHolidays = !!opts.enableHolidays
+    this.holidayCountry = opts.holidayCountry ?? "JP"
+    this.holidayLanguage = opts.holidayLanguage ?? (this.dateLocale.startsWith("ja") ? "ja" : "en")
 
 		// legends
     this.primaryLegends = opts.primaryLegends ?? []
@@ -151,16 +153,14 @@ export class Calendar {
   }
 
   // ---------- Private API ----------
-  private render(emitChange = false) {
+  private async render(emitChange = false) {
     const header = this.renderHeader()
-    // const grid = this.renderGrid()
     const months = this.renderMonths()
     const footer = this.renderFooter()
 
     this.root.innerHTML = ""
     this.root.appendChild(header)
-    // this.root.appendChild(grid)
-    this.root.appendChild(months)
+    this.root.appendChild(await months)
     this.root.appendChild(footer)
 
     if (emitChange) {
@@ -247,7 +247,7 @@ export class Calendar {
     return header
   }
 
-  private renderMonths(): HTMLElement {
+  private async renderMonths(): Promise<HTMLElement> {
     const monthsWrapper = document.createElement("div")
     monthsWrapper.className = this.shownMonths > 1 ? "t-cal-months" : "t-cal-months single"
 
@@ -262,14 +262,8 @@ export class Calendar {
       const monthEl = document.createElement("div")
       monthEl.className = "t-cal-month"
 
-      // const inlineTitle = document.createElement("div")
-      // inlineTitle.className = "t-cal-title-inline"
-      // inlineTitle.textContent = new Intl.DateTimeFormat(this.dateLocale, { month: "long", year: "numeric" })
-      //   .format(new Date(year, month, 1))
-      // monthEl.appendChild(inlineTitle)
-
       const grid = this.renderGrid(year, month, monthsWrapper)
-      monthEl.append(grid)
+      monthEl.append(await grid)
       monthsWrapper.appendChild(monthEl)
     }
 
@@ -279,7 +273,7 @@ export class Calendar {
     return monthsWrapper
   }
 
-  private renderGrid(year: number, month: number, monthsContainer: HTMLElement): HTMLElement {
+  private async renderGrid(year: number, month: number, monthsContainer: HTMLElement): Promise<HTMLElement> {
     const grid = document.createElement("div")
     grid.className = "t-cal-grid"
 
@@ -344,7 +338,8 @@ export class Calendar {
       if (date.getTime() === today.getTime()) dayButton.classList.add("is-today")
 
       // holiday
-      if (this.holiday) {
+      if (this.enableHolidays) {
+        await this.ensureHolidays()
         const title = this.holidayName(date)
         if (title) {
           dayButton.classList.add("is-holiday")
@@ -469,6 +464,15 @@ export class Calendar {
     this.render()
   }
 
+  private async ensureHolidays() {
+    if (!this.enableHolidays) return null
+    if (!this.holidays) {
+      const Holidays = await loadHolidays()
+      this.holidays = new Holidays(this.holidayCountry, { languages: this.holidayLanguage })
+    }
+    return this.holidays
+  }
+
   private updateSelectionClasses(grid: HTMLElement) {
     const allDay = grid.querySelectorAll<HTMLButtonElement>(".t-cal-day")
     allDay.forEach((el) => el.classList.remove("is-selected", "is-in-range", "is-start", "is-end"))
@@ -538,15 +542,15 @@ export class Calendar {
       const value = this.holidaysCache[isoDate]
       return value === true ? undefined : (value as string)
     }
-    if (!this.holiday) return undefined
+    if (!this.holidays) return undefined
 
-    const holidayInfo: HolidaysTypes.Holiday[] | HolidaysTypes.Holiday | false = this.holiday.isHoliday(date)
+    const holidayInfo: Holidays.HolidaysTypes.Holiday[] | Holidays.HolidaysTypes.Holiday | false = this.holidays.isHoliday(date)
     if (!holidayInfo) {
       this.holidaysCache[isoDate] = true
       return undefined
     }
     // holidayInfo can be object or array
-    const name = Array.isArray(holidayInfo) ? holidayInfo[0]?.name : (holidayInfo as HolidaysTypes.Holiday).name
+    const name = Array.isArray(holidayInfo) ? holidayInfo[0]?.name : (holidayInfo as Holidays.HolidaysTypes.Holiday).name
     this.holidaysCache[isoDate] = name || true
     return name || undefined
   }

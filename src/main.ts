@@ -1,4 +1,4 @@
-import { Calendar } from './Calendar.ts'
+import Calendar from './Calendar.ts'
 import { AVAILABILITY_STATUS } from './__mocks__/availability.ts'
 import { PRIMARY_LEGENDS, SECONDARY_LEGENDS } from './__mocks__/legends.ts'
 import './style.css'

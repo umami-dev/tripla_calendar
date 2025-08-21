@@ -3,6 +3,7 @@ import dts from 'vite-plugin-dts';
 
 export default defineConfig({
   build: {
+    cssCodeSplit: true,
     lib: {
       entry: 'src/index.ts',
       name: 'TriplaCalendar',
@@ -12,7 +13,6 @@ export default defineConfig({
         format === 'cjs' ? 'index.cjs' :
         `index.${format}.js`,
     },
-    sourcemap: true,
     rollupOptions: {
       external: ["dayjs", "date-holidays"],
       output: {
@@ -22,6 +22,7 @@ export default defineConfig({
         },
       },
     },
+    sourcemap: true,
   },
   plugins: [
     dts({
