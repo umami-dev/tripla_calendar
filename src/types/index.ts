@@ -4,7 +4,7 @@ export type SelectionModeType = "single" | "range" | "multiple"
 export type AvailabilityType = 'price' | 'status'
 export type SupportedLocaleType = "ja" | "en" | "ko" | "zh_Hans" | "zh_Hant" | "id" | "th" | "ar"
 export type SupportedHolidayCountryType = "JP"
-export type ActiveInputType = "start" | "end" | null
+export type ActiveInputType = "start" | "end"
 export type ShownMonthsType = 1 | 2
 
 export interface AvailabilityItem {
@@ -19,7 +19,7 @@ export interface LegendItem {
 }
 
 export interface DateItem {
-	start: Date
+	start?: Date
 	end?: Date
 }
 

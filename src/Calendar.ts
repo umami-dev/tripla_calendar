@@ -9,10 +9,11 @@ import type { CalendarOptions, LocaleType, SelectionModeType, AvailabilityItem, 
 export default class Calendar {
 	// main
   private root: HTMLElement
+  private currentDate: Date
   private dateLocale: LocaleType
   private startWeekOn: number
   private selectionMode: SelectionModeType
-  private activeInput: ActiveInputType
+  private activeInput?: ActiveInputType
   private onSelect?: ({ start, end }: DateItem) => void
 
 	// disable rules
@@ -59,14 +60,14 @@ export default class Calendar {
 
     if (!this.root) throw new Error("Calendar: target element not found.")
 
+    this.currentDate = this.normalizeDate(new Date)
     this.dateLocale = opts.dateLocale ?? "en-US"
     this.startWeekOn = Math.min(Math.max(opts.startWeekOn ?? 0, 0), 6)
     this.selectionMode = opts.selectionMode ?? "range"
-    this.activeInput = null
     this.onSelect = opts.onSelect
 
 		// disable rules
-    this.minDate = opts.minDate || new Date
+    this.minDate = opts.minDate || this.currentDate
     this.maxDate = opts.maxDate
     this.isDateDisabled = opts.isDateDisabled
 
@@ -93,7 +94,7 @@ export default class Calendar {
     this.secondaryLegends = opts.secondaryLegends ?? []
 
 		// view state
-    const init = opts.initialDate ?? new Date()
+    const init = opts.initialDate ?? this.currentDate
     this.viewYear = init.getFullYear()
     this.viewMonth = init.getMonth()
 
@@ -242,14 +243,15 @@ export default class Calendar {
       const titleEl = document.createElement("div")
       titleEl.className = "t-cal-title"
       // TODO change format for each locales
+      const safeDateLabel = new Date(this.viewYear, this.viewMonth + i, 1)
       const label = new Intl.DateTimeFormat(this.dateLocale, { month: "long", year: "numeric" }).format(
-        new Date(this.viewYear, this.viewMonth + i, 1)
+        safeDateLabel
       )
       titleEl.textContent = label
       titleWrapper.appendChild(titleEl)
     }
 
-		const today = new Date()
+		const today = this.currentDate
 		if (today.getMonth() === this.viewMonth) {
 			prev.classList.add("hide")
 		} else {
@@ -298,7 +300,7 @@ export default class Calendar {
     const dows = Array.from({ length: 7 }, (_, i) => (i + this.startWeekOn) % 7)
     dows.forEach((dow) => {
 			// random date, just search for Sunday first
-			const fake = new Date(2021, 7, dow + 1)
+			const fake = this.normalizeDate(new Date(2021, 7, dow + 1))
       const weekHeaderCell = document.createElement("div")
       weekHeaderCell.className = "t-cal-head-cell"
       weekHeaderCell.textContent = weekdayFormat.format(fake)
@@ -307,13 +309,13 @@ export default class Calendar {
     grid.appendChild(weekHeader)
 
     // dates (1-31)
-    const firstDate = new Date(year, month, 1)
-    const lastDate = new Date(year, month + 1, 0)
+    const firstDate = this.normalizeDate(new Date(year, month, 1))
+    const lastDate = this.normalizeDate(new Date(year, month + 1, 0))
     const days = lastDate.getDate()
     const offset = this.mod(firstDate.getDay() - this.startWeekOn, 7)
     const totalCells = Math.ceil((offset + days) / 7) * 7
 
-    const today = new Date()
+    const today = this.currentDate
     today.setHours(0, 0, 0, 0)
 
     for (let i = 0; i < totalCells; i++) {
@@ -334,7 +336,7 @@ export default class Calendar {
         continue
       }
 
-      const date = new Date(year, month, day)
+      const date = this.normalizeDate(new Date(year, month, day))
       const isoDate = this.toISO(date)
 
       const dayButton = document.createElement("button")
@@ -440,52 +442,61 @@ export default class Calendar {
 
   // TODO handle multiple mode
   private handleClick(date: Date) {
-    const safeDate = this.normalizeDate(date)
-
     if (this.selectionMode === "single") {
-      this.selectedStartDate = safeDate
+      this.selectedStartDate = date
       this.selectedEndDate = undefined
-      this.dispatch("calendar:date-select", { date: safeDate })
-      this.handleClickDate({ start: safeDate })
+      this.dispatch("calendar:single-date-selected", { date })
+      this.handleClickDate({ start: date })
       this.render()
       return
     }
 
     // range mode
-    if (this.activeInput === "start" || !this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
-      this.selectedStartDate = safeDate
-      this.selectedEndDate = undefined
-      this.hoverDate = undefined
-      this.dispatch("calendar:range-start", { start: safeDate })
-      this.handleClickDate({ start: safeDate })
+    // respect if activeInput provided
+    // activeInput is for input that being selected right now
+    if (this.activeInput === "start") {
+      this.selectedStartDate = date
+
+      // if end already selected
+      if (this.selectedEndDate) {
+        this.handleSelectEndDate()
+        this.render()
+        return
+      }
+
+      // normal flow
+      this.handleSelectStartDate()
       this.render()
       return
     }
 
-    // set end
     if (this.activeInput === "end") {
-      this.selectedEndDate = safeDate
-      if (this.selectedEndDate < this.selectedStartDate) {
-        [this.selectedStartDate, this.selectedEndDate] = [this.selectedEndDate, this.selectedStartDate]
+      this.selectedEndDate = date
+
+      // if start already selected
+      if (this.selectedStartDate) {
+        this.handleSelectEndDate()
+        this.render()
+        return
       }
 
-      const nights = Math.max(
-        0,
-        Math.round((+this.selectedEndDate - +this.selectedStartDate) / ONE_DAY_MS)
-      )
-
-      this.dispatch("calendar:range-complete", {
-        start: this.selectedStartDate,
-        end: this.selectedEndDate,
-        nights,
-      })
-
-      this.handleClickDate({
-        start: this.selectedStartDate,
-        end: this.selectedEndDate,
-      })
+      // end selected early
+      this.dispatch("calendar:range-end-selected", { end: date })
+      this.handleClickDate({ end: date })
+      this.render()
+      return
     }
 
+    // fallback if activeInput not provided 
+    if (!this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
+      this.selectedStartDate = date
+      this.handleSelectStartDate()
+      this.render()
+      return
+    }
+
+    this.selectedEndDate = date
+    this.handleSelectEndDate()
     this.render()
   }
 
@@ -493,6 +504,26 @@ export default class Calendar {
     if (this.onSelect) {
       this.onSelect({ start, end })
     }
+  }
+
+  private handleSelectStartDate() {
+    this.selectedEndDate = undefined
+    this.hoverDate = undefined
+    this.dispatch("calendar:range-start-selected", { start: this.selectedStartDate })
+    this.handleClickDate({ start: this.selectedStartDate })
+  }
+
+  private handleSelectEndDate() {
+    if (this.selectedEndDate! < this.selectedStartDate!) {
+      [this.selectedStartDate, this.selectedEndDate] = [this.selectedEndDate, this.selectedStartDate]
+    }
+    const nights = Math.max(0, Math.round((+this.selectedEndDate! - +this.selectedStartDate!) / ONE_DAY_MS))
+    this.dispatch("calendar:range-complete", {
+      start: this.selectedStartDate,
+      end: this.selectedEndDate,
+      nights,
+    })
+    this.handleClickDate({ start: this.selectedStartDate, end: this.selectedEndDate })
   }
 
   private normalizeDate(date: Date) {
@@ -568,7 +599,7 @@ export default class Calendar {
   }
 
   private addMonths(year: number, month: number, delta: number) {
-    const date = new Date(year, month + delta, 1)
+    const date = this.normalizeDate(new Date(year, month + delta, 1))
     return { year: date.getFullYear(), month: date.getMonth() }
   }
 
